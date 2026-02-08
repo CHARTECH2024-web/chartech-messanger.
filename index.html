@@ -1,129 +1,127 @@
 <!DOCTYPE html>
 <html lang="fr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width =device-width, initial-scale=1.0">
-        <title>CH APP Network</title>
-        <style>body{background-color: #0a0b10; color: #e0e0e0;
-        font-family: 'Seorge UI',
-        sans-serif; margin: 0;}
-        .navbar{
-            background-color: #161b22; padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #00d4ff; box-shadow: 0 0 15px #00d4ff55;
-        }
-        .logo 
-        {font-weight: bold;
-        font-size: 22px; color: #00d4ff;
-        }
-        .contrainer{
-display: flex; padding: 20px; gap: 20px; max-width: 1200px;
-            margin: auto;
-        }
-        .feed {
-            width: 100%; max-width: 700px; margin: auto;
-        }
-        .post-creator, .post {
-            background: #161b22;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid #30363d;
-        }
-        textarea{
-            width: 100%;
-            background: #0d1117;
-            border: 1px solid #30363d;
-            color: white;
-            border-radius: 5px;
-            padding: 10px; box-sizing: border-box; resize: none;
-        }
-        .btn-group {
-            display: flex; gap: 10px; margin-top: 10px;
-        }
-        button{
-            background: #00d4ff;
-            border: none; padding: 10px 20px; border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        button:hover{
-            opacity: 0.8;
-            box-shadow: 0 0 10px #00d4ff;
-        }
-        .btn-plan {
-            background: #1a1a1a;
-            color: #ff0055;
-            border: 1px solid #ff0055;
-        }
-        .btn-plan:hover{
-            background: #ff0055;
-            border: 1px solid #ff0055;
-            color: white;
-            box-shadow: 0 0 10px #ff0055;
-        }
-        .post-header{
-            color: #00d4ff;
-            font-weight: bold;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .timestamp{
-            color: #8b949e;
-            font-size: 12px;
-        }
-        </style>
-    </head>
-    <body>
-        <nav class="navbar">
-            <div class="CHARTECH.png.jpg">CHARTECH<span> Ecosystem</span></div>
-            <div id="userStatuts"
-            style="color: #00d4ff;;
-            font-size: 14px;">Connecté en tant qu' Administrateur</div>
-        </nav>
-        <div class="post-creator">
-            <textarea id="msgInput" rows="3"
-            placeholder="Ecrire un message..."></textarea>
-            <div class="btn-group">
-                <button onclick="Envoyer()">
-                    Envoyer un message
-                </button>
-                    <button class="btn-plan" onclick="EnvoyerTechnique()">plan  AVION</button>
-            </div>
-        </div>
-               <div id="messagesContrainer"></div>
-    </main>
-</div>
-<script>
-    function ajouterMessage(auteur, texte, estTechnique = false){
-        const contrainer = document.getElementById('messagesContrainer');
-        const div = document.createElement('div');
-        div.className = 'post';
-        if(estTechnique)
-        div.style.borderLeft = "4px solid #ff0055";
-    const temps = new Date().toLocaleTimeString();
-    div.innerHTML = `
-    <div class="post-header">
-        <span>${auteur}</span>
-        <span class="timestamp">${temps}</span>
-        </div>
-        <div class="post-content">${texte}</div>
-    `;
-    contrainer.prepend(div);
+<head>
+  <meta charset="UTF-8">
+  <title>Messagerie Futuriste</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
-    function Envoyer(){
-        const input = document.getElementById('msgInput');
-        if(input.value.trim() !== ""){ajouterMessage("Charles(Leader)", input.value);
-            input.value = "";
-        }
+    .chat-container {
+      width: 400px;
+      height: 600px;
+      background: rgba(255,255,255,0.05);
+      border: 2px solid #00f0ff;
+      border-radius: 15px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 0 20px #00f0ff;
     }
-    function EnvoyerTechnique(){
-        ajouterMessage("Charles(Leader)", "SYSTEME : Nouveau plan de l'avion solaire à partager avec le groupe.", true);
+    .chat-header {
+      padding: 15px;
+      text-align: center;
+      background: rgba(0,240,255,0.2);
+      font-weight: bold;
+      letter-spacing: 2px;
     }
-</script>
-    </body>
+    .chat-messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .message {
+      max-width: 70%;
+      padding: 10px 15px;
+      border-radius: 20px;
+      position: relative;
+      animation: fadeIn 0.5s ease;
+    }
+    .sent {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #00f0ff, #0077ff);
+      box-shadow: 0 0 10px #00f0ff;
+    }
+    .received {
+      align-self: flex-start;
+      background: linear-gradient(135deg, #ff00cc, #333399);
+      box-shadow: 0 0 10px #ff00cc;
+    }
+    .chat-input {
+      display: flex;
+      padding: 10px;
+      background: rgba(0,240,255,0.1);
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 20px;
+      outline: none;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+    .chat-input button {
+      margin-left: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 20px;
+      background: #00f0ff;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .chat-input button:hover {
+      background: #0077ff;
+      color: #fff;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">💬 Messagerie Futuriste</div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input">
+      <input type="text" id="chatInput" placeholder="Écrire un message...">
+      <button onclick="sendMessage()">Envoyer</button>
+    </div>
+  </div>
+
+  <script>
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    let turn = true; // true = utilisateur, false = correspondant
+
+    function sendMessage() {
+      const text = chatInput.value.trim();
+      if (text === '') return;
+      
+      const msg = document.createElement('div');
+      msg.classList.add('message', turn ? 'sent' : 'received');
+      msg.textContent = text;
+      chatMessages.appendChild(msg);
+      
+      chatInput.value = '';
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      
+      // alterner les rôles
+      turn = !turn;
+    }
+  </script>
+</body>
 </html>
