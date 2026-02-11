@@ -123,5 +123,53 @@
       turn = !turn;
     }
   </script>
+  <script type="module">
+    import{initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import{getDatabase, ref, push, onChildAdded} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    const firebaseConfig = {apiKey: "AIzaSyCLMupkpdNWZPt4sntDsFvnoyBWVmX5KAc",
+      authDomain: "ch-app-b3 b94.firbaseapp.com",
+      databaseURL: "https://ch-app-b3b94-default-rtbd.firebaseio.com",
+      projectId:"ch-app-b3b94",
+      storageBucket: "ch-app-b3b94.firebasestorage.app",
+      messagingSenderId: "794629229663",
+      appId: "1:794629229663:web:ccadc48d796618be9bdfea",measurementId:"G-7ZV2HF52EK"
+
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    window.db = db;
+    window.dbRef = ref;
+    window.dbPush = push;
+    window.dbOnChild = onChildAdded;
+    </script>
+    <script>
+      const userEmail = prompt("charlestechnology46@gmail.com :") || "charles@test.com";
+      const userName = prompt("CHARTECH2024-web :") || "Charles";
+      
+
+      function sendMessage(){
+        const text = document.getElementById('chatInput').value;
+        if(text.trim() === "" || !window.db) return;
+
+        window.dbPush(window.dbRef(window.db, "messages"), {
+          sender: pseudo,
+          message: text,
+          time: Date.now()
+        });
+        document.getElementById('chatInput').value = "";
+      }
+
+      setTimeout(() => {
+        if (window.db){
+          window.dbOnChild(window.dbRef(window.db, "messages"), (snapshot) => {
+            const data = snapshot.val();
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${data.sender === pseudo ? 'sent' : 'received'}`;
+            msgDiv.textContent = data.message;
+            document.getElementById('chatMessages').appendChild(msgDiv);
+          });
+        }
+      }, 1000);
+      </script>
 </body>
 </html>
