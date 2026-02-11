@@ -152,9 +152,10 @@
         if(text.trim() === "" || !window.db) return;
 
         window.dbPush(window.dbRef(window.db, "messages"), {
-          sender: pseudo,
+          email: userEmail,
+          username: userName,
           message: text,
-          time: Date.now()
+          timestamp: Date.now()
         });
         document.getElementById('chatInput').value = "";
       }
