@@ -1,175 +1,177 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Messagerie Futuriste</title>
-  <style>
+    <head>
+<meta charset="UTF-8">
+<title>CH-APP</title>
+<style>
     body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+        margin: 0;
+        font-family: 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        color: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
     }
     .chat-container {
-      width: 400px;
-      height: 600px;
-      background: rgba(255,255,255,0.05);
-      border: 2px solid #00f0ff;
-      border-radius: 15px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 0 20px #00f0ff;
+        width: 400px;
+        height: 600px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid #00f0ff;
+        border-radius: 15px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow:  0 0 20px #00f0ff;
     }
     .chat-header {
-      padding: 15px;
-      text-align: center;
-      background: rgba(0,240,255,0.2);
-      font-weight: bold;
-      letter-spacing: 2px;
+        padding: 15px;
+        text-align: center;
+        background: rgba(0, 240, 255, 0.2);
+        font-weight: bold;
+        letter-spacing: 2px;
     }
     .chat-messages {
-      flex: 1;
-      padding: 15px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+        flex: 1;
+        padding: 15px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
-    .message {
-      max-width: 70%;
-      padding: 10px 15px;
-      border-radius: 20px;
-      position: relative;
-      animation: fadeIn 0.5s ease;
+    .messages {
+        max-width: 70%;
+        padding: 10px 15px;
+        border-radius: 20px;
+        position: relative;
+        animation: fadeIn 0.5s ease;
     }
     .sent {
-      align-self: flex-end;
-      background: linear-gradient(135deg, #00f0ff, #0077ff);
-      box-shadow: 0 0 10px #00f0ff;
+        align-self: flex-end;
+        background: linear-gradient(135deg, #00f0ff, #0077ff);
+        box-shadow: 0 0 10px #00f0ff;
     }
     .received {
-      align-self: flex-start;
-      background: linear-gradient(135deg, #ff00cc, #333399);
-      box-shadow: 0 0 10px #ff00cc;
+        align-self: flex-start;
+
+        background: linear-gradient(135deg, #ff00cc, #333399);
+        box-shadow: 0 0 10px #ff00cc;
     }
     .chat-input {
-      display: flex;
-      padding: 10px;
-      background: rgba(0,240,255,0.1);
+        display: flex;
+        padding: 10px;
+        background: rgba(0, 240, 255, 0.1);
     }
     .chat-input input {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      border-radius: 20px;
-      outline: none;
-      background: rgba(255,255,255,0.1);
-      color: #fff;
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 20px;
+        outline: none;
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+    .chat-input input::placeholder{
+        color: rgba(255, 255, 255, 0.5);
     }
     .chat-input button {
-      margin-left: 10px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 20px;
-      background: #00f0ff;
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.3s;
+        margin-left: 10px;
+        padding: 10px 20pc;
+        border: none;
+        border-radius: 20px;
+        background: #00f0ff;
+        color: #000;
+        font-weight: 
+        bold;
+        cursor: pointer;
+        transition: 0.3s;
     }
-    .chat-input button:hover {
-      background: #0077ff;
-      color: #fff;
+    .chat-input button:hover{
+        background: #0077ff;
+        color: #fff;
     }
     @keyframes fadeIn {
-      from {opacity: 0; transform: translateY(10px);}
-      to {opacity: 1; transform: translateY(0);}
+        from {opacity: 0; transform: translateY(10px);}
+        to {opacity: 1; transform: translateY(0);}
     }
-  </style>
-</head>
-<body>
-  <div class="chat-container">
-    <div class="chat-header">💬 Messagerie</div>
-    <div class="chat-messages" id="chatMessages"></div>
-    <div class="chat-input">
-      <input type="text" id="chatInput" placeholder="Écrire un message...">
-      <button onclick="sendMessage()">Envoyer</button>
-    </div>g
-  </div>
+    .statuts {
+        font-size: 12px;
+        text-align: center;
+        color: #00f0ff;
+        padding: 5px;
+    }
+</style>
+    </head>
+    <body>
+        <div class="chat-container">
+            <div class="chat-header">CH-APP</div>
+            <div class="chat-messages" id="chatMessages"></div>
+   <div class="chat-input">
+    <input type="text" id="chatInput" placeholder="Ecrire un message...">
+    <button onclick="sendMessage()"> Envoyer</button>
+   </div>
+        </div>
 
-  <script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIwaSyCLMupkpdNWZPt4sntDsFvnoYBWvmX5KAc",
+    authDomain: "ch-app-b3b94.firebaseapp.com",
+    databaseURL: "https://ch-app-b3b94-default-rtdb.firebaseio.com",
+    projectId: "ch-app-b3b94",
+    storageBucket: "ch-app-b3b94.firebasestorage.app",
+    messagingSenderId: "794629229663",
+    appId: "1:794629229663:web:ccadc48d796618be9bdfea",
+    measurementId: "G-7ZV2HF52EK"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+window.db = db;
+window.dbRef = ref;
+window.dbPush = push;
+window.dbOnChild = onChildAdded;
+
+const userEmail = prompt("charlestechnology46@gmail.com :", "charlestechnology46@gmail.com ")  || "charlestechnology46@gmail.com";
+const userName = prompt("CHARTECH2024-web :", "Charles") || "Charles"
+
+window.userName = userName;
+
+const messagesRef = ref(db, "messages");
+
+onChildAdded(messagesRef, (snapshot) => {
+    const data = snapshot.val();
     const chatMessages = document.getElementById('chatMessages');
-    const chatInput = document.getElementById('chatInput');
-    let turn = true; // true = utilisateur, false = correspondant
 
-    function sendMessage() {
-      const text = chatInput.value.trim();
-      if (text === '') return;
-      
-      const msg = document.createElement('div');
-      msg.classList.add('message', turn ? 'sent' : 'received');
-      msg.textContent = text;
-      chatMessages.appendChild(msg);
-      
-      chatInput.value = '';
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      
-      // alterner les rôles
-      turn = !turn;
-    }
-  </script>
-  <script type="module">
-    import{initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import{getDatabase, ref, push, onChildAdded} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-                 const firebaseConfig = {apiKey: "AIzaSyCLMupkpdNWZPt4sntDsFvnoyBWVmX5KAc",
-      authDomain: "CHARTECH2024-web  firbaseapp.com",
-      projectId:"CHARTECH2024-web",
-      storageBucket: "CHARTECH2024-web.appspot.com",
-      messagingSenderId: "794629229663",
-      appId: "1:794629229663:web:ccadc48d796618be9bdfea"
+    const msgDiv = document.createElement('div');
 
-    };
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    window.db = db;
-    window.dbRef = ref;
-    window.dbPush = push;
-    window.dbOnChild = onChildAdded;
-    </script>
-    <script>
-      const userEmail = prompt("charlestechnology46@gmail.com :") || "charles@test.com";
-      const userName = prompt("CHARTECH2024-web :") || "Charles";
-      
+    msgDiv.className = `message ${data.username === window.userName ? 'sent' : 'received'}`;
+    msgDiv.textContent = `${data.username || 'Anonyme'}: ${data.message}`;
 
-      function sendMessage(){
-        const text = document.getElementById('chatInput').value;
-        if(text.trim() === "" || !window.db) return;
+    chatMessages.appendChild(msgDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;    
+}); 
 
-        window.dbPush(window.dbRef(window.db, "messages"), {
-          email: userEmail,
-          username: userName,
-          message: text,
-          timestamp: Date.now()
-        });
-        document.getElementById('chatInput').value = "";
-      }
+window.sendMessage = function() {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
 
-      setTimeout(() => {
-        if (window.db){
-          window.dbOnChild(window.dbRef(window.db, "messages"), (snapshot) => {
-            const data = snapshot.val();
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${data.sender === pseudo ? 'sent' : 'received'}`;
-            msgDiv.textContent = data.message;
-            document.getElementById('chatMessages').appendChild(msgDiv);
-          });
-        }
-      }, 1000);
-      </script>
-</body>
+    if(text === "") return;
+
+    push(messagesRef, {
+        email: userEmail,
+        username: userName,
+        message: text,
+        timestamp: Date.now()
+    });
+    input.value = "";
+}
+
+</script>
+
+    </body>
 </html>
