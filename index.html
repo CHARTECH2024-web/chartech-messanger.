@@ -4,6 +4,62 @@
 <meta charset="UTF-8">
 <title>CH-APP</title>
 <style>
+    #loginScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        flex-direction: column;
+    }
+    .log-inbox{
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid #00f0ff;
+        border-radius: 15px;
+        padding: 30px;
+        width: 300px;
+        box-shadow: 0 0 20px #00f0ff;
+        text-align: center;
+    }
+    .log-inbox h2 {
+        color: #fff;
+        margin-bottom: 20px;
+        letter-spacing: 2px;
+    }
+    .log-inbox input{
+        width: 90%;
+        padding: 12px;
+        margin: 10px 0;
+        border: 1px solid #00f0ff;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        outline: none;
+    }
+    .log-inbox input::placeholder{
+        color: rgba(255, 255, 255, 0.5);
+    }
+    .log-inbox button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 15px;
+        border: none;
+        border-radius: 10px;
+        background: #00f0ff;
+        color: #000;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .log-inbox button:hover {
+        background: #0077ff;
+        color: #fff;
+    }
     body {
         margin: 0;
         font-family: 'Segoe UI', sans-serif;
@@ -15,8 +71,8 @@
         height: 100vh;
     }
     .chat-container {
-        width: 400px;
-        height: 600px;
+        width: 450px;
+        height: 650px;
         background: rgba(255, 255, 255, 0.05);
         border: 2px solid #00f0ff;
         border-radius: 15px;
@@ -26,12 +82,81 @@
         box-shadow:  0 0 20px #00f0ff;
     }
     .chat-header {
-        padding: 15px;
+        padding: 10px;
         text-align: center;
         background: rgba(0, 240, 255, 0.2);
         font-weight: bold;
         letter-spacing: 2px;
+        border-bottom: 1px solid #00f0ff;
     }
+    .tab {
+        display: flex;
+        border-bottom: 1px solid #00f0ff;
+    }
+    .tab-button {
+        flex: 1;
+        padding: 12px;
+        background: transparent;
+        border: none;
+        color: #fff;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+        border-bottom: 2px solid transparent;
+    }
+    .tab-button.active{
+        background: rgba(0, 240, 255, 0.2);
+        border-bottom: 2px solid #00f0ff;
+    }
+    .tab-content {
+        display: none;
+        padding: 15px;
+        height: 180px;
+        overflow-y: auto;
+        border-bottom: 1px solid #00f0ff;
+    }
+    .tab-content.active{
+        display: block;
+    }
+    .contact-item, .group-item{
+        padding: 10px;
+        margin: 5px 0;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: 0.3s;
+        border: 1px solid transparent;
+    }
+    .contact-item:hover, .group-item:hover{
+        background: rgba(0, 240, 255, 0.2);
+        border-color: #00f0ff;
+    }
+    .private-form, .group-form {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: rgba(0,0,0,0.2);
+        border-radius: 10px;
+    }
+    .private-form input, .group-form input, .group-form textarea{
+        width: 90%;
+        padding: 8px;
+        margin: 5px 0;
+        border: 1px solid #00f0ff;
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+    .private-form button, .group-form button{
+        padding: 8px 15px;
+        margin-top: 10px;
+        border: none;
+        border-radius: 5px;
+        background: #00f0ff;
+        color: #000;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
     .chat-messages {
         flex: 1;
         padding: 15px;
@@ -62,6 +187,7 @@
         display: flex;
         padding: 10px;
         background: rgba(0, 240, 255, 0.1);
+        border-top: 1px solid #00f0ff;
     }
     .chat-input input {
         flex: 1;
@@ -77,7 +203,7 @@
     }
     .chat-input button {
         margin-left: 10px;
-        padding: 10px 20pc;
+        padding: 10px 20px;
         border: none;
         border-radius: 20px;
         background: #00f0ff;
@@ -95,27 +221,70 @@
         from {opacity: 0; transform: translateY(10px);}
         to {opacity: 1; transform: translateY(0);}
     }
-    .statuts {
-        font-size: 12px;
+    .hidden {
+        display: none !important;
+    }
+    .current-chat-header{
+        padding: 10px;
+        background: rgba(0, 240, 255, 0.1);
         text-align: center;
-        color: #00f0ff;
-        padding: 5px;
+        border-bottom: 1px solid #00f0ff;
+        font-weight: bold;
     }
 </style>
     </head>
     <body>
-        <div class="chat-container">
-            <div class="chat-header">CH-APP</div>
-            <div class="chat-messages" id="chatMessages"></div>
-   <div class="chat-input">
-    <input type="text" id="chatInput" placeholder="Ecrire un message...">
-    <button onclick="sendMessage()"> Envoyer</button>
-   </div>
+        <div id="loginScreen">
+            <div class="login-box">
+                <h2>CHARTECH</h2>
+                <input type="email" id="loginEmail" placeholder="Ton email" required>
+                <input type="text" id="loginPseudo" placeholder="Ton pseudo" required>
+                <button onclick="login()"> Se connecter </button>
+            </div>
         </div>
+
+        <div id="chatApp " class="hidden">
+        <div class="chat-container">
+         <div class="chat-header">CH-APP</div>
+
+         <div class="tabs">
+            <button class="tab-button active" onclick="showTab('private')">Privé</button>
+            <button class="tab-button" onclick="showTab('groups')">Groupes</button>
+         </div>
+         <div id="privateTab" class="tab-content active">
+            <div class="private-form">
+                <h4>Nouvelle conversation privée</h4>
+                <input type="email" id="recipientEmail" placeholder="Email du destinataire">
+                <button onclick="startPrivateChat()">Démarrer la conversation</button>
+            </div>
+            <h4>Mes conversation privées</h4>
+            <div id="privateChatList"></div>
+         </div>
+
+<div id="groupsTab" class="tab-content">
+    <div class="group-form">
+        <h4>Crée un groupe</h4>
+        <input type="text" id="groupName" placeholder="Nom du groupe">
+        <textarea name="groupMembers" placeholder="Emails des membres (séparés par des virgules)"></textarea>
+        <button onclick="createGroup()">Créer le groupe</button>
+    </div>
+    <h4>Mes groupes</h4>
+    <div id="groupsList"></div>
+</div>
+<div id="currentChatHeader" class="current-chat-header"> Sélectionnez une conversation </div>
+
+<div class="chat-messages" id="chatMessages"></div>
+
+<div class="chat-input">
+    <input type="text" id="chatInput" placeholder="Ecrire un message...">
+    <button onclick="sendCurrentChatMessage()">Envoyer</button>
+</div>
+</div>
+</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, push, onChildAdded, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIwaSyCLMupkpdNWZPt4sntDsFvnoYBWvmX5KAc",
@@ -124,52 +293,181 @@ const firebaseConfig = {
     projectId: "ch-app-b3b94",
     storageBucket: "ch-app-b3b94.firebasestorage.app",
     messagingSenderId: "794629229663",
-    appId: "1:794629229663:web:ccadc48d796618be9bdfea",
-    measurementId: "G-7ZV2HF52EK"
+    appId: "1:794629229663:web:ccadc48d796618be9bdfea"
+    
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-window.db = db;
-window.dbRef = ref;
-window.dbPush = push;
-window.dbOnChild = onChildAdded;
+let currentUserEmail = null;
+let currentUserPseudo = null;
+let currentChatId = null;
+let currentChatType = null;
 
-const userEmail = prompt("charlestechnology46@gmail.com :", "charlestechnology46@gmail.com ")  || "charlestechnology46@gmail.com";
-const userName = prompt("CHARTECH2024-web :", "Charles") || "Charles"
 
-window.userName = userName;
+window.login = async function () {
+const email = document.getElementById('loginEmail').value.trim();
+const pseudo = document.getElementById('loginPseudo').value.trim();
 
-const messagesRef = ref(db, "messages");
+if(!email || !pseudo){
+    alert("Veuillez remplir tous les champs !");
+    return;
+}
 
-onChildAdded(messagesRef, (snapshot) => {
-    const data = snapshot.val();
-    const chatMessages = document.getElementById('chatMessages');
+const cleanEmail = email.replace(/\./g, ',');
 
-    const msgDiv = document.createElement('div');
+try {
+    await set(ref(db, 'users/' + cleanEmail),{
+        pseudo: pseudo,
+        email: email 
+    });
 
-    msgDiv.className = `message ${data.username === window.userName ? 'sent' : 'received'}`;
-    msgDiv.textContent = `${data.username || 'Anonyme'}: ${data.message}`;
+    currentUserEmail = email;
+    currentUserPseudo = pseudo;
 
-    chatMessages.appendChild(msgDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;    
-}); 
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('chatApp').classList.remove('hidden');
 
-window.sendMessage = function() {
+    loadPrivateChats();
+    loadGroups();
+}
+
+catch(error){
+    console.error("Erreur de connexion :", error);
+    alert("Erreur lors de la connexion.");
+}
+};
+window.showTab = function(tabName){
+    document.querySelectorAll('.tab-button').forEach(btn.classList.remove('active'));
+    event.target.classList.add('active');
+
+    document.querySelectorAll('.tab-content').forEach(btn => content.classList.remove('active'));
+    document.getElementById(tabName + 'Tab').classList.add('active');
+};
+
+async function loadPrivateChats() {
+    const cleanEmail = currentUserEmail.replace(/\./g, ',');
+    const userChatsRef = ref(db, 'userChats/' + cleanEmail);
+
+    const snapshot = await get(userChatsRef)
+    const listDiv = document.getElementById('privateChatList');
+    listDiv = '';
+
+
+    if(snapshot.exists()){
+        snapshot.forEach(async child => {
+            const groupId = child.key;
+            const groupSnapshot = await get(ref(db, 'groups/' + groupId));
+            if (groupSnapshot.exists()){
+                const groupData = groupSnapshot.val();
+
+                const div = document.createElement('div');
+                div.className = 'group-item';
+                div.textContent = `${groupData.name}`;
+                div.onclick = () => openChat('group', groupId.groupData.name);
+                listDiv.appendChild(div);                   
+                }
+    
+        });
+    }
+    else {
+        listDiv.innerHTML = '<p>Aucun groupe pour le moment<p>';
+    }
+    
+}
+window.startPrivateChat = async function() {
+    const recipient = document.getElementById('recipientEmail').value.trim();
+    if(!recipient) return;
+    const cleanRecipient = recipient.replace(/\./g, ',');
+    const recipientSnapshot = await get(ref(db, 'users/' + cleanRecipient));
+
+    if (!recipientSnapshot.exists()){
+        alert("Cet email n'est pas encore enrégistré !");
+        return;
+    }
+    const participants = [currentUserEmail.replace(/\./g, ','), cleanRecipient].sort();
+    const chatId = participants.join('_');
+
+    await set(ref(db, 'userChats/' + currentUserEmail.replace(/\./g, ',') + '/' + chatId), {
+        type: 'private',
+        other: recipientSnapshot.val().pseudo || recipient,
+        otherEmail: recipient
+    });
+    await set(ref(db, 'userChats/' + cleanRecipient + '/' + chatId), {
+        type: 'private',
+        other: currentUserPseudo,
+        otherEmail: currentUserEmail
+    });
+    alert("Conversation créée !");
+    loadPrivateChats();
+    document.getElementById('recipientEmail').value = '';
+};
+             window.createGroup = async function() {
+    const groupName = document.getElementById('groupName').value.trim();
+    const membersInput = document.getElementById('groupMembers').value;
+
+    if(!groupName || !membersInput) return;
+    const membersEmails = membersInput.split(',').map(e => e.trim().replace(/\./g, ',') );
+
+    const creatorClean = currentUserEmail.replace(/\./g, ',');
+    if(!membersEmails.includes(creatorClean)){
+        membersEmails.push(creatorClean);
+    }
+    const groupId = 'group_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+
+    await set(ref(db, 'group/' + groupId),{
+        name: groupName,
+        creator: creatorClean,
+        members: membersEmails,
+        createdAt: Date.now()
+    });
+    for (let member of membersEmails){
+        await set(ref(db, 'userGroups/' + member + '/' + groupId), true);
+    }
+    alert("Groupe créé !");
+    loadGroups();
+    document.getElementById('groupName').value = '';
+    document.getElementById('groupMembers').value = '';
+};
+function openChat(type, chatId, displayName){
+    currentChatId = chatId;
+    currentChatType = type;
+    document.getElementById('currentChatHeader').textContent = `${displayName}`;
+    document.getElementById('chatMessages').innerHTML = '';
+
+    const messagesRef = ref(db, `${type === 'private' ? 'privateMessages' : 'groupMessages'}/${chatId}`);
+
+    onChildAdded(messagesRef, (snapshot) => {
+        const msg = snapshot.val();
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${msg.senderEmail === currentUserEmail ? 'sent' : 'received'}`;
+        msgDiv.textContent = `${msg.senderPseudo}: ${msg.text}`;
+        document.getElementById('chatMessages').appendChild(msgDiv);
+        document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+    });
+}
+window.sendCurrentChatMessage = function(){
     const input = document.getElementById('chatInput');
     const text = input.value.trim();
+    
+    if (!text || !currentChatId){
+        alert("Sélectionner d'abord une conversation !");
+        return;
+    }
+const messagesRef = ref(db, `${currentChatType == 'private' ? 'privateMessages' : 'groupMessages'}/${currentChatId}`);
 
-    if(text === "") return;
+
 
     push(messagesRef, {
-        email: userEmail,
-        username: userName,
+        senderEmail: currentUserEmail,
+      senderPseudo: currentUserPseudo,
         message: text,
         timestamp: Date.now()
     });
-    input.value = "";
-}
+    input.value = '';
+};
+
 
 </script>
 
