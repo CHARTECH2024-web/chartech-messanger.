@@ -17,7 +17,7 @@
         z-index: 1000;
         flex-direction: column;
     }
-    .log-inbox{
+    .login-box{
         background: rgba(255, 255, 255, 0.05);
         border: 2px solid #00f0ff;
         border-radius: 15px;
@@ -26,12 +26,12 @@
         box-shadow: 0 0 20px #00f0ff;
         text-align: center;
     }
-    .log-inbox h2 {
+    .login-box h2 {
         color: #fff;
         margin-bottom: 20px;
         letter-spacing: 2px;
     }
-    .log-inbox input{
+    .login-box input{
         width: 90%;
         padding: 12px;
         margin: 10px 0;
@@ -41,10 +41,10 @@
         color: #fff;
         outline: none;
     }
-    .log-inbox input::placeholder{
+    .login-box input::placeholder{
         color: rgba(255, 255, 255, 0.5);
     }
-    .log-inbox button {
+    .login-box button {
         width: 100%;
         padding: 12px;
         margin-top: 15px;
@@ -56,7 +56,7 @@
         cursor: pointer;
         transition: 0.3s;
     }
-    .log-inbox button:hover {
+    .login-box button:hover {
         background: #0077ff;
         color: #fff;
     }
@@ -89,7 +89,7 @@
         letter-spacing: 2px;
         border-bottom: 1px solid #00f0ff;
     }
-    .tab {
+    .tabs {
         display: flex;
         border-bottom: 1px solid #00f0ff;
     }
@@ -137,7 +137,7 @@
         background: rgba(0,0,0,0.2);
         border-radius: 10px;
     }
-    .private-form input, .group-form input, .group-form textarea{
+    .private-form input, .group-form input, .group-form textarea {
         width: 90%;
         padding: 8px;
         margin: 5px 0;
@@ -165,7 +165,7 @@
         flex-direction: column;
         gap: 10px;
     }
-    .messages {
+    .message {
         max-width: 70%;
         padding: 10px 15px;
         border-radius: 20px;
@@ -208,8 +208,7 @@
         border-radius: 20px;
         background: #00f0ff;
         color: #000;
-        font-weight: 
-        bold;
+        font-weight: bold;
         cursor: pointer;
         transition: 0.3s;
     }
@@ -248,7 +247,7 @@
          <div class="chat-header">CH-APP</div>
 
          <div class="tabs">
-            <button class="tab-button active" onclick="showTab('private')">Privé</button>
+            <button class="tab-button active" onclick="showTab('private', event)">Privé</button>
             <button class="tab-button" onclick="showTab('groups')">Groupes</button>
          </div>
          <div id="privateTab" class="tab-content active">
@@ -284,16 +283,18 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  
+     import { getDatabase, ref, set,  push, onChildAdded, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
-    apiKey: "AIwaSyCLMupkpdNWZPt4sntDsFvnoYBWvmX5KAc",
+    apiKey: "AIzaSyCLMupkpdNWZPt4sntDsFvnoYBWvmX5KAc",
     authDomain: "ch-app-b3b94.firebaseapp.com",
     databaseURL: "https://ch-app-b3b94-default-rtdb.firebaseio.com",
     projectId: "ch-app-b3b94",
     storageBucket: "ch-app-b3b94.firebasestorage.app",
     messagingSenderId: "794629229663",
     appId: "1:794629229663:web:ccadc48d796618be9bdfea"
+     
     
 };
 
@@ -335,15 +336,15 @@ try {
 
 catch(error){
     console.error("Erreur de connexion :", error);
-    alert("Erreur lors de la connexion.");
+    alert("Erreur lors de la connexion : " + error.message);
 }
 };
-window.showTab = function(tabName){
-    document.querySelectorAll('.tab-button').forEach(btn.classList.remove('active'));
+window.showTab = function(tabName, event){
+    document.querySelectorAll      ('.tab-button').forEach(btn.classList.remove('active'));
     event.target.classList.add('active');
 
     document.querySelectorAll('.tab-content').forEach(btn => content.classList.remove('active'));
-    document.getElementById(tabName + 'Tab').classList.add('active');
+document.getElementById(tabName + 'Tab').classList.remove('active');
 };
 
 async function loadPrivateChats() {
@@ -352,7 +353,7 @@ async function loadPrivateChats() {
 
     const snapshot = await get(userChatsRef)
     const listDiv = document.getElementById('privateChatList');
-    listDiv = '';
+    listDiv.innerHTML = '';
 
 
     if(snapshot.exists()){
@@ -449,7 +450,7 @@ function openChat(type, chatId, displayName){
 }
 window.sendCurrentChatMessage = function(){
     const input = document.getElementById('chatInput');
-    const text = input.value.trim();
+     const text = input.value.trim();
     
     if (!text || !currentChatId){
         alert("Sélectionner d'abord une conversation !");
@@ -467,9 +468,6 @@ const messagesRef = ref(db, `${currentChatType == 'private' ? 'privateMessages' 
     });
     input.value = '';
 };
-
-
 </script>
-
     </body>
 </html>
