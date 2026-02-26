@@ -2,116 +2,70 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CH APP</title>
+    <title>CHARTECH Messenger</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <!-- ÉCRAN DE CONNEXION -->
+    <!-- Connexion -->
     <div id="loginScreen">
         <div class="login-box">
             <h2>CHARTECH</h2>
-            <input type="email" id="loginEmail" placeholder="Email" required>
-            <input type="text" id="loginPseudo" placeholder="Pseudo" required>
-            <button onclick="login()">
-                <i class="fas fa-sign-in-alt"></i> Se connecter
-            </button>
+            <input type="email" id="loginEmail" placeholder="Ton email" required>
+            <input type="text" id="loginPseudo" placeholder="Ton pseudo" required>
+            <button onclick="login()">Se connecter</button>
         </div>
     </div>
 
-    <!-- APPLICATION PRINCIPALE -->
-s    <div id="chatApp" class="hidden">
+    <!-- Chat -->
+    <div id="chatApp" class="hidden">
         <div class="chat-container">
-            <!-- PANEL GAUCHE - CONVERSATIONS -->
-            <div class="chat-sidebar">
-                <div class="chat-header">
-                    <h2>CHARTECH</h2>
-                    <div class="user-status">
-                        <span class="status-dot"></span>
-                        <span id="currentUserDisplay">Utilisateur</span>
-                    </div>
-                </div>
+            <div class="chat-header">CHARTECH</div>
 
-                <div class="tabs">
-                    <button class="tab-button active" onclick="showTab('private', event)">
-                        <i class="fas fa-user"></i> Privé
-                    </button>
-                    <button class="tab-button" onclick="showTab('groups', event)">
-                        <i class="fas fa-users"></i> Groupes
-                    </button>
-                </div>
-
-                <!-- ONGLET CONVERSATIONS PRIVÉES -->
-                <div id="privateTab" class="tab-content active">
-                    <div class="private-form">
-                        <h4><i class="fas fa-plus-circle"></i> Nouvelle conversation</h4>
-                        <input type="email" id="recipientEmail" placeholder="Email du destinataire">
-                        <button onclick="startPrivateChat()">
-                            <i class="fas fa-comment"></i> Démarrer
-                        </button>
-                    </div>
-                    <h4><i class="fas fa-history"></i> Conversations récentes</h4>
-                    <div class="conversations-list" id="privateChatList">
-                        <!-- Les conversations apparaîtront ici -->
-                    </div>
-                </div>
-
-                <!-- ONGLET GROUPES -->
-                <div id="groupsTab" class="tab-content">
-                    <div class="group-form">
-                        <h4><i class="fas fa-plus-circle"></i> Créer un groupe</h4>
-                        <input type="text" id="groupName" placeholder="Nom du groupe">
-                        <textarea id="groupMembers" placeholder="Emails des membres (séparés par des virgules)"></textarea>
-                        <button onclick="createGroup()">
-                            <i class="fas fa-users"></i> Créer le groupe
-                        </button>
-                    </div>
-                    <h4><i class="fas fa-users"></i> Mes groupes</h4>
-                    <div class="conversations-list" id="groupsList">
-                        <!-- Les groupes apparaîtront ici -->
-                    </div>
-                </div>
+            <div class="tabs">
+                <button class="tab-button active" onclick="showTab('private', event)">Privé</button>
+                <button class="tab-button" onclick="showTab('groups', event)">Groupes</button>
             </div>
 
-            <!-- PANEL DROIT - ZONE DE CHAT -->
-            <div class="chat-main">
-                <div class="current-chat-header">
-                    <div class="chat-contact-info">
-                        <div class="chat-contact-avatar" id="currentChatAvatar"></div>
-                        <div class="chat-contact-details">
-                            <h3 id="currentChatHeader">Sélectionnez une conversation</h3>
-                            <div class="chat-contact-status">
-                                <span class="online-status" id="currentChatStatus">●</span> 
-                                <span id="currentChatStatusText">En ligne</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="chat-actions">
-                        <i class="fas fa-phone-alt"></i>
-                        <i class="fas fa-video"></i>
-                        <i class="fas fa-info-circle"></i>
-                    </div>
+            <!-- Privé -->
+            <div id="privateTab" class="tab-content active">
+                <div class="private-form">
+                    <h4>Nouvelle conversation</h4>
+                    <input type="email" id="recipientEmail" placeholder="Email du destinataire">
+                    <button onclick="startPrivateChat()">Démarrer</button>
                 </div>
+                <h4>Conversations récentes</h4>
+                <div id="privateChatList"></div>
+            </div>
 
-                <!-- ZONE DES MESSAGES -->
-                <div class="chat-messages" id="chatMessages">
-                    <!-- Les messages apparaîtront ici -->
+            <!-- Groupes -->
+            <div id="groupsTab" class="tab-content">
+                <div class="group-form">
+                    <h4>Créer un groupe</h4>
+                    <input type="text" id="groupName" placeholder="Nom du groupe">
+                    <textarea id="groupMembers" placeholder="Emails des membres (séparés par des virgules)"></textarea>
+                    <button onclick="createGroup()">Créer le groupe</button>
                 </div>
+                <h4>Mes groupes</h4>
+                <div id="groupsList"></div>
+            </div>
 
-                <!-- ZONE DE SAISIE -->
-                <div class="chat-input-area">
-                    <div class="chat-input-container">
-                        <input type="text" id="chatInput" placeholder="Écrivez votre message...">
-                        <button onclick="sendCurrentChatMessage()">
-                            <i class="fas fa-paper-plane"></i> Envoyer
-                        </button>
-                    </div>
-                </div>
+            <!-- Chat -->
+            <div id="currentChatHeader" class="current-chat-header">Sélectionnez une conversation</div>
+            <div id="chatMessages" class="chat-messages"></div>
+
+            <!-- Saisie + photo -->
+            <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="Écrire un message...">
+                <button onclick="document.getElementById('photoInput').click()">📷</button>
+                <input type="file" id="photoInput" accept="image/*" style="display:none">
+                <button onclick="sendCurrentChatMessage()">Envoyer</button>
             </div>
         </div>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
