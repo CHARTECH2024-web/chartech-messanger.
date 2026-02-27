@@ -23,9 +23,18 @@ let aiMessagesDiv = null;
 let callStatusDiv = null;
 let ringtone = document.getElementById('ringtone');
 let incomingCallTimeout = null;
-let aiMemory = [];
-let aiMood = "motivé";
-let currentLanguage = 'fr'; // par défaut
+let aiLongTermMemory = [];
+let aiStats = {
+    questionsPosees: 0,
+    reponsesDonnees: 0,
+    sujetsPref: {},
+    derniereInteraction: null
+};
+let currentLanguage = 'fr';
+let deepThinkEnabled = false;
+let webSearchEnabled = false;
+let uploadedMedia = [];
+let mediaUrls = [];
 
 // ===== TRADUCTIONS =====
 const translations = {
@@ -105,14 +114,7 @@ const translations = {
     }
 };
 
-// ===== FONCTION DE CHANGEMENT DE LANGUE =====
-window.setLanguage = function(lang) {
-    currentLanguage = lang;
-    localStorage.setItem('language', lang);
-    updateUITexts();
-};
-
-// Mettre à jour tous les textes de l'interface
+// ===== FONCTIONS DE BASE =====
 function updateUITexts() {
     const t = translations[currentLanguage];
     document.getElementById('loginEmail').placeholder = t.loginPlaceholderEmail;
@@ -137,7 +139,7 @@ function updateUITexts() {
     
     document.querySelector('#aiTab h4').textContent = t.aiAssistant;
     document.getElementById('aiInput').placeholder = t.aiPlaceholder;
-    document.querySelector('#aiTab .ai-input button').textContent = t.send;
+    document.querySelector('#aiTab .ai-input-wrapper button').textContent = t.send;
     
     document.querySelector('#callTab h4').textContent = '📞 ' + t.call;
     document.getElementById('callContactSelect').options[0].text = t.selectContact;
@@ -147,22 +149,10 @@ function updateUITexts() {
     document.getElementById('chatInput').placeholder = t.messagePlaceholder;
 }
 
-// Charger la langue sauvegardée
-const savedLang = localStorage.getItem('language');
-if (savedLang) setLanguage(savedLang);
+function formatTime(t) {
+    return new Date(t).toLocaleTimeString(currentLanguage === 'fr' ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+}
 
-// ===== NOTIFICATIONS =====
-if (Notification.permission !== 'granted') Notification.requestPermission();
-
-// ===== THÈMES =====
-window.setTheme = function(theme) {
-    document.body.className = 'theme-' + theme;
-    localStorage.setItem('theme', theme);
-};
-const savedTheme = localStorage.getItem('theme');
-if (savedTheme) setTheme(savedTheme);
-
-// ===== FONCTIONS AUDIO =====
 function playMessageSound() {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioCtx.createOscillator();
@@ -174,6 +164,25 @@ function playMessageSound() {
     oscillator.start();
     oscillator.stop(audioCtx.currentTime + 0.2);
 }
+
+// ===== THÈMES ET LANGUE =====
+window.setTheme = function(theme) {
+    document.body.className = 'theme-' + theme;
+    localStorage.setItem('theme', theme);
+};
+window.setLanguage = function(lang) {
+    currentLanguage = lang;
+    localStorage.setItem('language', lang);
+    updateUITexts();
+};
+
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme) setTheme(savedTheme);
+const savedLang = localStorage.getItem('language');
+if (savedLang) setLanguage(savedLang);
+
+// ===== NOTIFICATIONS =====
+if (Notification.permission !== 'granted') Notification.requestPermission();
 
 // ===== CONNEXION =====
 window.login = function() {
@@ -194,7 +203,7 @@ window.login = function() {
     loadGroups();
     loadContactsForCall();
     initAI();
-    updateUITexts(); // pour être sûr
+    updateUITexts();
 };
 
 // ===== ONGLETS =====
@@ -205,12 +214,7 @@ window.showTab = function(tabName, e) {
     document.getElementById(tabName + 'Tab').classList.add('active');
 };
 
-// ===== FORMAT HEURE =====
-function formatTime(t) {
-    return new Date(t).toLocaleTimeString(currentLanguage === 'fr' ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
-}
-
-// ===== AFFICHER MESSAGE =====
+// ===== AFFICHER MESSAGE (pour chat normal) =====
 function displayMessage(msg, containerId = 'chatMessages') {
     const container = document.getElementById(containerId);
     const div = document.createElement('div');
@@ -270,16 +274,22 @@ async function loadGroups() {
     list.innerHTML = '';
     const t = translations[currentLanguage];
     if (snap.exists()) {
-        snap.forEach(async child => {
-            const g = await db.ref('groups/' + child.key).once('value');
-            if (g.exists()) {
-                const div = document.createElement('div');
-                div.className = 'group-item';
-                div.textContent = '👥 ' + g.val().name;
-                div.onclick = () => openChat('group', child.key, g.val().name);
-                list.appendChild(div);
-            }
+        const promises = [];
+        snap.forEach(child => {
+            promises.push((async () => {
+                const groupId = child.key;
+                const groupSnapshot = await db.ref('groups/' + groupId).once('value');
+                if (groupSnapshot.exists()) {
+                    const groupData = groupSnapshot.val();
+                    const div = document.createElement('div');
+                    div.className = 'group-item';
+                    div.textContent = '👥 ' + groupData.name;
+                    div.onclick = () => openChat('group', groupId, groupData.name);
+                    list.appendChild(div);
+                }
+            })());
         });
+        await Promise.all(promises);
     } else list.innerHTML = `<p style="color:#aaa; text-align:center;">${t.noGroup}</p>`;
 }
 
@@ -362,7 +372,230 @@ document.getElementById('photoInput').addEventListener('change', async function(
     });
 });
 
-// ===== IA AVANCÉE (bilingue) =====
+// ===== IA AVANCÉE =====
+function analyzeTopics(text) {
+    const topics = {
+        programmation: ['code', 'javascript', 'python', 'programmer', 'algorithme'],
+        math: ['math', 'calcul', 'équation', 'algèbre', 'géométrie'],
+        physique: ['physique', 'force', 'mouvement', 'énergie', 'mécanique'],
+        aviation: ['avion', 'drone', 'ch-01', 'vol', 'aile', 'moteur'],
+        medecine: ['médecin', 'santé', 'hôpital', 'maladie', 'traitement'],
+        russie: ['bauman', 'russie', 'moscou', 'russe'],
+        dieu: ['dieu', 'prière', 'foi', 'seigneur', 'église']
+    };
+    const detected = [];
+    const lower = text.toLowerCase();
+    for (const [topic, keywords] of Object.entries(topics)) {
+        if (keywords.some(k => lower.includes(k))) {
+            detected.push(topic);
+            aiStats.sujetsPref[topic] = (aiStats.sujetsPref[topic] || 0) + 1;
+        }
+    }
+    return detected;
+}
+
+function getAIResponse(text, lang) {
+    const lower = text.toLowerCase();
+    const kb = {
+        fr: {
+            programmation: ["La programmation est l'art de donner des instructions à un ordinateur. Tu utilises JavaScript, HTML, CSS...", "Veux-tu apprendre un nouveau langage ?", "Les algorithmes sont essentiels."],
+            math: ["Les mathématiques sont partout, surtout dans tes avions.", "L'algèbre linéaire est clé pour l'IA.", "Les équations différentielles décrivent le mouvement."],
+            physique: ["La physique régit le vol : portance, traînée, poussée.", "Les lois de Newton sont fondamentales.", "L'électromagnétisme est crucial pour les moteurs."],
+            aviation: ["Le CH-01 est un projet ambitieux !", "Parle-moi de l'autonomie de ton avion.", "La fibre de carbone est un bon choix."],
+            medecine: ["Les équipements médicaux que tu veux fabriquer pourront sauver des vies.", "L'IA aide au diagnostic.", "La télémédecine se développe."],
+            russie: ["Bauman est une excellente université.", "Apprends bien le russe !", "La Russie est forte en aérospatiale."],
+            dieu: ["Dieu est avec toi dans tous tes projets.", "Continue à prier et à Le remercier.", "La foi est une force."]
+        },
+        en: {
+            programmation: ["Programming is the art of giving instructions to a computer.", "Want to learn a new language?", "Algorithms are essential."],
+            math: ["Mathematics is everywhere, especially in your planes.", "Linear algebra is key for AI.", "Differential equations describe motion."],
+            physique: ["Physics governs flight: lift, drag, thrust.", "Newton's laws are fundamental.", "Electromagnetism is crucial for motors."],
+            aviation: ["The CH-01 is an ambitious project!", "Tell me about your plane's range.", "Carbon fiber is a good choice."],
+            medecine: ["The medical equipment you want to build can save lives.", "AI helps in diagnosis.", "Telemedicine is growing."],
+            russie: ["Bauman is an excellent university.", "Learn Russian well!", "Russia is strong in aerospace."],
+            dieu: ["God is with you in all your projects.", "Keep praying and thanking Him.", "Faith is a strength."]
+        }
+    };
+    for (const [topic, keywords] of Object.entries({
+        programmation: ['programmation', 'code', 'javascript', 'python'],
+        math: ['math', 'maths', 'calcul', 'équation'],
+        physique: ['physique', 'force', 'mouvement'],
+        aviation: ['avion', 'drone', 'ch-01'],
+        medecine: ['médecine', 'santé', 'médical'],
+        russie: ['russie', 'bauman', 'moscou'],
+        dieu: ['dieu', 'prière', 'foi']
+    })) {
+        if (keywords.some(k => lower.includes(k))) {
+            const arr = kb[lang][topic] || kb[lang].programmation;
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+    }
+    const defaults = lang === 'fr' 
+        ? ["Intéressant ! Peux-tu développer ?", "Je vois. Quel est ton objectif ?", "Veux-tu que je cherche des informations ?", "Je réfléchis..."]
+        : ["Interesting! Can you elaborate?", "I see. What's your goal?", "Want me to look up information?", "Thinking..."];
+    return defaults[Math.floor(Math.random() * defaults.length)];
+}
+
+async function callPythonAI(query, mediaUrls) {
+    try {
+        const response = await fetch('http://127.0.0.1:5000/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                query: query,
+                media_urls: mediaUrls,
+                deep_think: deepThinkEnabled,
+                web_search: webSearchEnabled
+            })
+        });
+        const data = await response.json();
+        return data.answer;
+    } catch (error) {
+        console.error("Erreur connexion Python:", error);
+        return "❌ IA locale non accessible. Vérifie que le serveur Python tourne.";
+    }
+}
+
+window.toggleDeepThink = function() {
+    deepThinkEnabled = !deepThinkEnabled;
+    const btn = document.getElementById('deepThinkBtn');
+    const status = document.getElementById('deepThinkStatus');
+    btn.classList.toggle('active', deepThinkEnabled);
+    status.classList.toggle('active', deepThinkEnabled);
+    if (deepThinkEnabled) {
+        document.getElementById('aiInput').classList.add('deep-thinking');
+    } else {
+        document.getElementById('aiInput').classList.remove('deep-thinking');
+    }
+};
+
+window.toggleWebSearch = function() {
+    webSearchEnabled = !webSearchEnabled;
+    const btn = document.getElementById('webSearchBtn');
+    const status = document.getElementById('webSearchStatus');
+    btn.classList.toggle('active', webSearchEnabled);
+    status.classList.toggle('active', webSearchEnabled);
+};
+
+document.getElementById('mediaInput').addEventListener('change', async function(e) {
+    const files = Array.from(e.target.files);
+    const preview = document.getElementById('mediaPreview');
+    for (const file of files) {
+        if (file.size > 50 * 1024 * 1024) {
+            alert(`Fichier trop volumineux : ${file.name} (max 50MB)`);
+            continue;
+        }
+        uploadedMedia.push(file);
+        try {
+            const storageRef = storage.ref('ai_media/' + Date.now() + '_' + file.name);
+            await storageRef.put(file);
+            const url = await storageRef.getDownloadURL();
+            mediaUrls.push({ url, type: file.type, name: file.name });
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const div = document.createElement('div');
+                div.className = 'preview-item';
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    div.appendChild(img);
+                } else if (file.type.startsWith('video/')) {
+                    const video = document.createElement('video');
+                    video.src = event.target.result;
+                    video.controls = true;
+                    div.appendChild(video);
+                }
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-btn';
+                removeBtn.innerHTML = '✕';
+                removeBtn.onclick = function() {
+                    const index = uploadedMedia.indexOf(file);
+                    if (index > -1) {
+                        uploadedMedia.splice(index, 1);
+                        mediaUrls.splice(index, 1);
+                    }
+                    div.remove();
+                };
+                div.appendChild(removeBtn);
+                preview.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error("Erreur upload média:", error);
+            alert(`Erreur lors de l'upload de ${file.name}`);
+        }
+    }
+});
+
+window.sendAIMessage = async function() {
+    const input = document.getElementById('aiInput');
+    const text = input.value.trim();
+    if (!text && uploadedMedia.length === 0) return;
+
+    const aiChatId = 'ai_' + currentUserEmail.replace(/\./g, ',');
+    const aiEmail = 'ai@chartech.com';
+    const topics = analyzeTopics(text);
+
+    db.ref('aiMessages/' + aiChatId).push({
+        senderEmail: currentUserEmail,
+        senderPseudo: currentUserPseudo,
+        text: text || "[Message avec média]",
+        timestamp: Date.now(),
+        topics: topics,
+        hasMedia: uploadedMedia.length > 0,
+        mediaCount: uploadedMedia.length
+    });
+    input.value = '';
+
+    const thinkingDiv = document.getElementById('aiThinking');
+    thinkingDiv.style.display = 'block';
+    if (deepThinkEnabled) {
+        thinkingDiv.innerHTML = `🧠 RÉFLEXION PROFONDE EN COURS <span>.</span><span>.</span><span>.</span>`;
+        thinkingDiv.style.animation = 'gradient 2s linear infinite';
+    } else {
+        thinkingDiv.innerHTML = `🤖 ${translations[currentLanguage].aiThinking} <span>.</span><span>.</span><span>.</span>`;
+    }
+
+    const startTime = Date.now();
+    let finalResponse = "";
+
+    // Appel au serveur Python (si disponible)
+    const mediaUrlsForPython = mediaUrls.map(m => m.url);
+    const pythonResponse = await callPythonAI(text, mediaUrlsForPython);
+
+    if (!pythonResponse.startsWith("❌")) {
+        finalResponse = pythonResponse;
+    } else {
+        // Réponse locale de secours
+        let baseResponse = getAIResponse(text, currentLanguage);
+        if (deepThinkEnabled) {
+            baseResponse = "🧠 **ANALYSE APPROFONDIE**\n\n" + baseResponse + "\n\nPoints clés développés :\n• Contexte technique\n• Étapes détaillées\n• Références";
+        }
+        if (mediaUrls.length > 0) {
+            baseResponse += "\n\n📷 **MÉDIAS REÇUS** : " + mediaUrls.length + " fichier(s) à analyser.";
+        }
+        finalResponse = baseResponse;
+    }
+
+    const thinkingTime = ((Date.now() - startTime) / 1000).toFixed(1);
+    finalResponse += `\n\n_⏱️ Réflexion : ${thinkingTime}s_`;
+
+    thinkingDiv.style.display = 'none';
+    db.ref('aiMessages/' + aiChatId).push({
+        senderEmail: aiEmail,
+        senderPseudo: 'CHARTECH AI',
+        text: finalResponse,
+        timestamp: Date.now(),
+        deepThink: deepThinkEnabled,
+        webSearch: webSearchEnabled
+    });
+
+    // Réinitialiser les médias
+    uploadedMedia = [];
+    mediaUrls = [];
+    document.getElementById('mediaPreview').innerHTML = '';
+};
+
 function initAI() {
     aiMessagesDiv = document.getElementById('aiMessages');
     const aiEmail = 'ai@chartech.com';
@@ -373,144 +606,14 @@ function initAI() {
     db.ref('aiMessages/' + aiChatId).on('child_added', snap => {
         const msg = snap.val();
         displayMessage(msg, 'aiMessages');
+        if (msg.senderEmail === aiEmail) {
+            aiStats.reponsesDonnees++;
+        } else {
+            aiStats.questionsPosees++;
+        }
+        aiLongTermMemory.push(msg);
     });
 }
-
-// Base de connaissances multilingue
-const knowledgeBase = {
-    fr: {
-        programmation: [
-            "La programmation, c'est l'art de donner des instructions à un ordinateur. Tu utilises JavaScript, HTML, CSS...",
-            "Tu veux apprendre un langage ? Python est parfait pour commencer.",
-            "Les algorithmes sont le cœur de la programmation. Veux-tu que je t'explique un tri ?"
-        ],
-        math: [
-            "Les mathématiques sont partout ! Dans tes avions, dans le code, dans la nature.",
-            "L'algèbre linéaire est essentielle pour la 3D et l'IA.",
-            "Les équations différentielles décrivent le mouvement. Essentiel pour ton CH-01 !"
-        ],
-        medecine: [
-            "La médecine utilise beaucoup de tech aujourd'hui : l'imagerie, les robots chirurgicaux.",
-            "Savais-tu que l'IA peut détecter des maladies sur des radios ?",
-            "Les équipements médicaux que tu veux fabriquer pourront sauver des vies."
-        ],
-        physique: [
-            "La physique régit le vol de tes avions : portance, traînée, poussée.",
-            "Newton et ses lois : action/réaction, inertie...",
-            "L'électromagnétisme est crucial pour les moteurs et batteries."
-        ],
-        defaut: [
-            "Intéressant ! Peux-tu développer ?",
-            "Je vois. Quel est ton objectif ?",
-            "Veux-tu que je cherche des informations sur ce sujet ?",
-            "Je réfléchis... une seconde.",
-            "Super ! Continue comme ça."
-        ]
-    },
-    en: {
-        programmation: [
-            "Programming is the art of giving instructions to a computer. You use JavaScript, HTML, CSS...",
-            "Want to learn a language? Python is great to start.",
-            "Algorithms are the heart of programming. Want me to explain sorting?"
-        ],
-        math: [
-            "Mathematics is everywhere! In your planes, in code, in nature.",
-            "Linear algebra is essential for 3D and AI.",
-            "Differential equations describe motion. Essential for your CH-01!"
-        ],
-        medecine: [
-            "Medicine uses a lot of tech today: imaging, surgical robots.",
-            "Did you know AI can detect diseases on X-rays?",
-            "The medical equipment you want to build can save lives."
-        ],
-        physique: [
-            "Physics governs the flight of your planes: lift, drag, thrust.",
-            "Newton and his laws: action/reaction, inertia...",
-            "Electromagnetism is crucial for motors and batteries."
-        ],
-        defaut: [
-            "Interesting! Can you elaborate?",
-            "I see. What's your goal?",
-            "Want me to look up information on this topic?",
-            "Thinking... one moment.",
-            "Great! Keep going."
-        ]
-    }
-};
-
-// Fonction pour obtenir une réponse intelligente
-function getAIResponse(userMessage, lang) {
-    const lower = userMessage.toLowerCase();
-    const kb = knowledgeBase[lang];
-    
-    // Détection de mots-clés
-    if (lower.includes('programmation') || lower.includes('code') || lower.includes('javascript') || lower.includes('python')) {
-        return kb.programmation[Math.floor(Math.random() * kb.programmation.length)];
-    }
-    if (lower.includes('math') || lower.includes('algèbre') || lower.includes('equation') || lower.includes('calcul')) {
-        return kb.math[Math.floor(Math.random() * kb.math.length)];
-    }
-    if (lower.includes('médecine') || lower.includes('medecine') || lower.includes('santé') || lower.includes('hopital')) {
-        return kb.medecine[Math.floor(Math.random() * kb.medecine.length)];
-    }
-    if (lower.includes('physique') || lower.includes('newton') || lower.includes('moteur') || lower.includes('force')) {
-        return kb.physique[Math.floor(Math.random() * kb.physique.length)];
-    }
-    // Si c'est une question sur toi ou le contexte
-    if (lower.includes('qui es-tu') || lower.includes('who are you')) {
-        return lang === 'fr' ? "Je suis CHARTECH IA, ton assistant personnel." : "I am CHARTECH AI, your personal assistant.";
-    }
-    if (lower.includes('merci') || lower.includes('thanks')) {
-        return lang === 'fr' ? "Avec plaisir !" : "You're welcome!";
-    }
-    if (lower.includes('bonjour') || lower.includes('salut') || lower.includes('hello')) {
-        return lang === 'fr' ? "Bonjour Charles ! Comment vas-tu ?" : "Hello Charles! How are you?";
-    }
-    // Par défaut
-    return kb.defaut[Math.floor(Math.random() * kb.defaut.length)];
-}
-
-window.sendAIMessage = async function() {
-    const input = document.getElementById('aiInput');
-    const text = input.value.trim();
-    const t = translations[currentLanguage];
-    if (!text) return;
-
-    const aiChatId = 'ai_' + currentUserEmail.replace(/\./g, ',');
-    const aiEmail = 'ai@chartech.com';
-    
-    // Message de l'utilisateur
-    db.ref('aiMessages/' + aiChatId).push({
-        senderEmail: currentUserEmail,
-        senderPseudo: currentUserPseudo,
-        text: text,
-        timestamp: Date.now()
-    });
-    input.value = '';
-
-    // Afficher l'animation de réflexion
-    const thinkingDiv = document.getElementById('aiThinking');
-    thinkingDiv.style.display = 'block';
-    thinkingDiv.innerHTML = `🤖 ${t.aiThinking} <span>.</span><span>.</span><span>.</span>`;
-
-    // Simuler un temps de réflexion
-    const delay = Math.floor(Math.random() * 1500) + 500; // 0.5-2s
-    setTimeout(() => {
-        // Cacher l'animation
-        thinkingDiv.style.display = 'none';
-        
-        // Obtenir la réponse intelligente
-        const reply = getAIResponse(text, currentLanguage);
-        
-        // Envoyer la réponse
-        db.ref('aiMessages/' + aiChatId).push({
-            senderEmail: aiEmail,
-            senderPseudo: 'CHARTECH AI',
-            text: reply,
-            timestamp: Date.now()
-        });
-    }, delay);
-};
 
 // ===== APPEL =====
 function loadContactsForCall() {
@@ -530,8 +633,6 @@ function loadContactsForCall() {
         }
     });
 }
-
-let currentCall = null;
 
 window.startCall = function() {
     const select = document.getElementById('callContactSelect');

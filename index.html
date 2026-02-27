@@ -3,18 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CH-APP</title>
+    <title>CHARTECH Messenger</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<!-- Sélecteur de langue (à côté des thèmes) -->
-<div class="language-switcher">
-    <button onclick="setLanguage('fr')" title="Français">🇫🇷</button>
-    <button onclick="setLanguage('en')" title="English">🇬🇧</button>
-</div>
-
-<!-- Indicateur de réflexion de l'IA (à mettre dans l'onglet IA) -->
-<div id="aiThinking" class="ai-thinking" style="display:none;">🤖 réfléchit <span>.</span><span>.</span><span>.</span></div>
-
 <body class="theme-dark">
     <!-- Écran de connexion -->
     <div id="loginScreen">
@@ -29,17 +20,23 @@
     <!-- Application de chat -->
     <div id="chatApp" class="hidden">
         <div class="chat-container">
-            <!-- En-tête avec sélecteur de thème -->
+            <!-- En-tête avec sélecteurs de thème et langue -->
             <div class="chat-header">
                 <span>CHARTECH</span>
-                <div class="theme-switcher">
-                    <button onclick="setTheme('dark')" title="Sombre">🌙</button>
-                    <button onclick="setTheme('light')" title="Clair">☀️</button>
-                    <button onclick="setTheme('blue-night')" title="Bleu nuit">🌃</button>
+                <div class="header-controls">
+                    <div class="language-switcher">
+                        <button onclick="setLanguage('fr')" title="Français">🇫🇷</button>
+                        <button onclick="setLanguage('en')" title="English">🇬🇧</button>
+                    </div>
+                    <div class="theme-switcher">
+                        <button onclick="setTheme('dark')" title="Sombre">🌙</button>
+                        <button onclick="setTheme('light')" title="Clair">☀️</button>
+                        <button onclick="setTheme('blue-night')" title="Bleu nuit">🌃</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Barre d'onglets (avec IA et Appel) -->
+            <!-- Onglets -->
             <div class="tabs">
                 <button class="tab-button active" onclick="showTab('private', event)">💬 Privé</button>
                 <button class="tab-button" onclick="showTab('groups', event)">👥 Groupes</button>
@@ -74,11 +71,27 @@
             <div id="aiTab" class="tab-content">
                 <div class="ai-container">
                     <h4>Assistant IA CHARTECH</h4>
-                    <div class="ai-messages" id="aiMessages"></div>
-                    <div class="ai-input">
-                        <input type="text" id="aiInput" placeholder="Pose ta question...">
-                        <button onclick="sendAIMessage()">Envoyer</button>
+                    <div class="ai-buttons-row">
+                        <button id="deepThinkBtn" class="ai-mode-button" onclick="toggleDeepThink()">
+                            🧠 Réfléchir profond
+                            <span class="button-status" id="deepThinkStatus"></span>
+                        </button>
+                        <button id="webSearchBtn" class="ai-mode-button" onclick="toggleWebSearch()">
+                            🌐 Recherche en ligne
+                            <span class="button-status" id="webSearchStatus"></span>
+                        </button>
+                        <button id="uploadMediaBtn" class="ai-mode-button" onclick="document.getElementById('mediaInput').click()">
+                            📷 Image/Vidéo
+                        </button>
                     </div>
+                    <div id="aiThinking" class="ai-thinking" style="display:none;">🤖 réfléchit <span>.</span><span>.</span><span>.</span></div>
+                    <div class="ai-messages" id="aiMessages"></div>
+                    <div class="ai-input-wrapper">
+                        <input type="text" id="aiInput" placeholder="Pose ta question...">
+                        <button onclick="sendAIMessage()" id="sendAIBtn">Envoyer</button>
+                    </div>
+                    <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none" multiple>
+                    <div id="mediaPreview" class="media-preview"></div>
                 </div>
             </div>
 
