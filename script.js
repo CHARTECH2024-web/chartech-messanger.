@@ -1,13 +1,13 @@
 // ===== FIREBASE CONFIG (tirée de ta capture) =====
 const firebaseConfig = {
-    apiKey: "AIzaSyCLMupkpdNWZPt4sntDsFvnoyBWvmX5KAc",
+    apiKey: "AIzaSyCLMupkpdNWZPt4sntDsFvnoyBWVmX5KAc",
     authDomain: "ch-app-b3b94.firebaseapp.com",
     databaseURL: "https://ch-app-b3b94-default-rtdb.firebaseio.com/",
     projectId: "ch-app-b3b94",
     storageBucket: "ch-app-b3b94.firebasestorage.app",
     messagingSenderId: "794629229663",
     appId: "1:794629229663:web:ccadc48d796618be9bdfea",
-    measurementId: "G-ZV2HF52EK"
+    measurementId: "G-7ZV2HF52EK"
 };
 
 firebase.initializeApp(firebaseConfig);
