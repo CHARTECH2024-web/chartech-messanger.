@@ -1,4 +1,4 @@
-// ===== FIREBASE CONFIG (tirée de ta capture) =====
+// ===== FIREBASE CONFIG =====
 const firebaseConfig = {
     apiKey: "AIzaSyCLMupkpdNWZPt4sntDsFvnoyBWVmX5KAc",
     authDomain: "ch-app-b3b94.firebaseapp.com",
@@ -14,14 +14,41 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const storage = firebase.storage();
 
-// ===== VARIABLES =====
+// ===== VARIABLES GLOBALES =====
 let currentUserEmail = null;
 let currentUserPseudo = null;
 let currentChatId = null;
-let currentChatType = null;
+let currentChatType = null; // 'private' ou 'group'
+let aiMessagesDiv = null;
+let callStatusDiv = null;
+let ringtone = document.getElementById('ringtone');
+let incomingCallTimeout = null;
 
 // ===== NOTIFICATIONS =====
 if (Notification.permission !== 'granted') Notification.requestPermission();
+
+// ===== THÈMES =====
+window.setTheme = function(theme) {
+    document.body.className = 'theme-' + theme;
+    localStorage.setItem('theme', theme);
+};
+
+// Charger le thème sauvegardé
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme) setTheme(savedTheme);
+
+// ===== FONCTIONS AUDIO =====
+function playMessageSound() {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // La aigu
+    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.2);
+}
 
 // ===== CONNEXION =====
 window.login = function() {
@@ -39,6 +66,8 @@ window.login = function() {
     document.getElementById('chatApp').classList.remove('hidden');
     loadPrivateChats();
     loadGroups();
+    loadContactsForCall();
+    initAI();
 };
 
 // ===== ONGLETS =====
@@ -49,18 +78,22 @@ window.showTab = function(tabName, e) {
     document.getElementById(tabName + 'Tab').classList.add('active');
 };
 
-// ===== HEURE =====
-function formatTime(t) { return new Date(t).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }); }
+// ===== FORMAT HEURE =====
+function formatTime(t) {
+    return new Date(t).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
 
-// ===== AFFICHER MESSAGE (texte ou image) =====
-function displayMessage(msg) {
+// ===== AFFICHER MESSAGE =====
+function displayMessage(msg, containerId = 'chatMessages') {
+    const container = document.getElementById(containerId);
     const div = document.createElement('div');
     div.className = `message ${msg.senderEmail === currentUserEmail ? 'sent' : 'received'}`;
 
     if (msg.imageUrl) {
         const img = document.createElement('img');
         img.src = msg.imageUrl;
-        img.style.maxWidth = '200px'; img.style.borderRadius = '10px';
+        img.style.maxWidth = '200px';
+        img.style.borderRadius = '10px';
         div.appendChild(img);
     } else {
         div.textContent = `${msg.senderPseudo}: ${msg.text}`;
@@ -71,16 +104,20 @@ function displayMessage(msg) {
     time.textContent = formatTime(msg.timestamp);
     div.appendChild(time);
 
-    document.getElementById('chatMessages').appendChild(div);
-    document.getElementById('chatMessages').scrollTop = 999999;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
 
-    // Notification si on n'est pas l'expéditeur et si l'onglet est caché
-    if (msg.senderEmail !== currentUserEmail && document.hidden && Notification.permission === 'granted') {
-        new Notification(msg.senderPseudo, { body: msg.text || '📷 Photo' });
+    // Son si message reçu (pas de nous)
+    if (msg.senderEmail !== currentUserEmail && containerId !== 'aiMessages') {
+        playMessageSound();
+        // Notification
+        if (document.hidden && Notification.permission === 'granted') {
+            new Notification(msg.senderPseudo, { body: msg.text || '📷 Photo' });
+        }
     }
 }
 
-// ===== CHARGER CONVERSATIONS =====
+// ===== PRIVÉ =====
 async function loadPrivateChats() {
     if (!currentUserEmail) return;
     const clean = currentUserEmail.replace(/\./g, ',');
@@ -99,7 +136,6 @@ async function loadPrivateChats() {
     } else list.innerHTML = '<p style="color:#aaa; text-align:center;">Aucune conversation</p>';
 }
 
-// ===== CHARGER GROUPES =====
 async function loadGroups() {
     if (!currentUserEmail) return;
     const clean = currentUserEmail.replace(/\./g, ',');
@@ -120,7 +156,6 @@ async function loadGroups() {
     } else list.innerHTML = '<p style="color:#aaa; text-align:center;">Aucun groupe</p>';
 }
 
-// ===== DÉMARRER PRIVÉ =====
 window.startPrivateChat = async function() {
     const r = document.getElementById('recipientEmail').value.trim();
     if (!r) return;
@@ -142,7 +177,6 @@ window.startPrivateChat = async function() {
     document.getElementById('recipientEmail').value = '';
 };
 
-// ===== CRÉER GROUPE =====
 window.createGroup = async function() {
     const name = document.getElementById('groupName').value.trim();
     const members = document.getElementById('groupMembers').value.split(',').map(e => e.trim().replace(/\./g, ','));
@@ -158,7 +192,6 @@ window.createGroup = async function() {
     document.getElementById('groupMembers').value = '';
 };
 
-// ===== OUVRIR UN CHAT =====
 function openChat(type, chatId, displayName) {
     currentChatId = chatId;
     currentChatType = type;
@@ -170,7 +203,6 @@ function openChat(type, chatId, displayName) {
     db.ref(refPath + '/' + chatId).on('child_added', snap => displayMessage(snap.val()));
 }
 
-// ===== ENVOYER TEXTE =====
 window.sendCurrentChatMessage = function() {
     const input = document.getElementById('chatInput');
     const text = input.value.trim();
@@ -185,7 +217,6 @@ window.sendCurrentChatMessage = function() {
     input.value = '';
 };
 
-// ===== ENVOYER PHOTO =====
 document.getElementById('photoInput').addEventListener('change', async function(e) {
     const file = e.target.files[0];
     if (!file || !currentChatId) return;
@@ -200,3 +231,119 @@ document.getElementById('photoInput').addEventListener('change', async function(
         timestamp: Date.now()
     });
 });
+
+// ===== IA =====
+function initAI() {
+    aiMessagesDiv = document.getElementById('aiMessages');
+    // Créer une entrée AI dans la base si nécessaire
+    const aiEmail = 'ai@chartech.com';
+    const cleanAI = aiEmail.replace(/\./g, ',');
+    db.ref('users/' + cleanAI).set({ pseudo: 'CHARTECH AI', email: aiEmail });
+    // Écouter les messages AI pour cet utilisateur
+    const aiChatId = 'ai_' + currentUserEmail.replace(/\./g, ',');
+    db.ref('aiMessages/' + aiChatId).off();
+    db.ref('aiMessages/' + aiChatId).on('child_added', snap => {
+        const msg = snap.val();
+        if (msg.senderEmail !== currentUserEmail) {
+            displayMessage(msg, 'aiMessages');
+            playMessageSound();
+        } else {
+            displayMessage(msg, 'aiMessages');
+        }
+    });
+}
+
+window.sendAIMessage = function() {
+    const input = document.getElementById('aiInput');
+    const text = input.value.trim();
+    if (!text) return;
+    const aiChatId = 'ai_' + currentUserEmail.replace(/\./g, ',');
+    const aiEmail = 'ai@chartech.com';
+    db.ref('aiMessages/' + aiChatId).push({
+        senderEmail: currentUserEmail,
+        senderPseudo: currentUserPseudo,
+        text: text,
+        timestamp: Date.now()
+    });
+    input.value = '';
+
+    // Simuler une réponse de l'IA après un délai
+    setTimeout(() => {
+        const responses = [
+            "Intéressant ! Dis-m'en plus.",
+            "Je vois. Et toi, qu'en penses-tu ?",
+            "C'est une bonne idée !",
+            "Peux-tu préciser ?",
+            "Je suis là pour t'aider.",
+            "Super ! Continuez comme ça.",
+            "Hmm, laisse-moi réfléchir...",
+            "Voici une information : le Congo est un pays aux richesses immenses."
+        ];
+        const reply = responses[Math.floor(Math.random() * responses.length)];
+        db.ref('aiMessages/' + aiChatId).push({
+            senderEmail: aiEmail,
+            senderPseudo: 'CHARTECH AI',
+            text: reply,
+            timestamp: Date.now()
+        });
+    }, 1000);
+};
+
+// ===== APPEL =====
+function loadContactsForCall() {
+    if (!currentUserEmail) return;
+    const clean = currentUserEmail.replace(/\./g, ',');
+    db.ref('userChats/' + clean).once('value', snap => {
+        const select = document.getElementById('callContactSelect');
+        select.innerHTML = '<option value="">Choisir un contact</option>';
+        if (snap.exists()) {
+            snap.forEach(child => {
+                const data = child.val();
+                const option = document.createElement('option');
+                option.value = data.otherEmail;
+                option.textContent = data.other;
+                select.appendChild(option);
+            });
+        }
+    });
+}
+
+let currentCall = null;
+
+window.startCall = function() {
+    const select = document.getElementById('callContactSelect');
+    const contactEmail = select.value;
+    if (!contactEmail) return alert("Choisis un contact !");
+    const contactPseudo = select.options[select.selectedIndex].text;
+
+    document.getElementById('callStatus').textContent = `Appel en cours vers ${contactPseudo}...`;
+    ringtone.play();
+
+    // Simuler un appel entrant après 3 secondes
+    incomingCallTimeout = setTimeout(() => {
+        document.getElementById('callStatus').textContent = `Appel entrant de ${contactPseudo}`;
+        document.getElementById('answerBtn').style.display = 'inline-block';
+        document.getElementById('hangupBtn').style.display = 'inline-block';
+    }, 3000);
+};
+
+window.answerCall = function() {
+    ringtone.pause();
+    ringtone.currentTime = 0;
+    document.getElementById('callStatus').textContent = 'Appel en cours...';
+    document.getElementById('answerBtn').style.display = 'none';
+    // Simuler une conversation
+    setTimeout(() => {
+        document.getElementById('callStatus').textContent = 'Appel terminé';
+        document.getElementById('hangupBtn').style.display = 'none';
+    }, 10000);
+};
+
+window.hangupCall = function() {
+    ringtone.pause();
+    ringtone.currentTime = 0;
+    clearTimeout(incomingCallTimeout);
+    document.getElementById('callStatus').textContent = 'Appel terminé';
+    document.getElementById('answerBtn').style.display = 'none';
+    document.getElementById('hangupBtn').style.display = 'none';
+};

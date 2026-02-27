@@ -2,11 +2,12 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CH-APP</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <!-- Connexion -->
+<body class="theme-dark">
+    <!-- Écran de connexion -->
     <div id="loginScreen">
         <div class="login-box">
             <h2>CHARTECH</h2>
@@ -16,17 +17,28 @@
         </div>
     </div>
 
-    <!-- Chat -->
+    <!-- Application de chat -->
     <div id="chatApp" class="hidden">
         <div class="chat-container">
-            <div class="chat-header">CHARTECH</div>
-
-            <div class="tabs">
-                <button class="tab-button active" onclick="showTab('private', event)">Privé</button>
-                <button class="tab-button" onclick="showTab('groups', event)">Groupes</button>
+            <!-- En-tête avec sélecteur de thème -->
+            <div class="chat-header">
+                <span>CHARTECH</span>
+                <div class="theme-switcher">
+                    <button onclick="setTheme('dark')" title="Sombre">🌙</button>
+                    <button onclick="setTheme('light')" title="Clair">☀️</button>
+                    <button onclick="setTheme('blue-night')" title="Bleu nuit">🌃</button>
+                </div>
             </div>
 
-            <!-- Privé -->
+            <!-- Barre d'onglets (avec IA et Appel) -->
+            <div class="tabs">
+                <button class="tab-button active" onclick="showTab('private', event)">💬 Privé</button>
+                <button class="tab-button" onclick="showTab('groups', event)">👥 Groupes</button>
+                <button class="tab-button" onclick="showTab('ai', event)">🤖 IA</button>
+                <button class="tab-button" onclick="showTab('call', event)">📞 Appel</button>
+            </div>
+
+            <!-- Onglet Privé -->
             <div id="privateTab" class="tab-content active">
                 <div class="private-form">
                     <h4>Nouvelle conversation</h4>
@@ -37,23 +49,52 @@
                 <div id="privateChatList"></div>
             </div>
 
-            <!-- Groupes -->
+            <!-- Onglet Groupes -->
             <div id="groupsTab" class="tab-content">
                 <div class="group-form">
                     <h4>Créer un groupe</h4>
                     <input type="text" id="groupName" placeholder="Nom du groupe">
                     <textarea id="groupMembers" placeholder="Emails des membres (séparés par des virgules)"></textarea>
-                    <button onclick="createGroup()">Créer le groupe</button>
+                    <button onclick="createGroup()">Créer</button>
                 </div>
                 <h4>Mes groupes</h4>
                 <div id="groupsList"></div>
             </div>
 
-            <!-- Chat -->
-            <div id="currentChatHeader" class="current-chat-header">Sélectionnez une conversation</div>
-            <div id="chatMessages" class="chat-messages"></div>
+            <!-- Onglet IA -->
+            <div id="aiTab" class="tab-content">
+                <div class="ai-container">
+                    <h4>Assistant IA CHARTECH</h4>
+                    <div class="ai-messages" id="aiMessages"></div>
+                    <div class="ai-input">
+                        <input type="text" id="aiInput" placeholder="Pose ta question...">
+                        <button onclick="sendAIMessage()">Envoyer</button>
+                    </div>
+                </div>
+            </div>
 
-            <!-- Saisie + photo -->
+            <!-- Onglet Appel -->
+            <div id="callTab" class="tab-content">
+                <div class="call-container">
+                    <h4>📞 Appels CHARTECH</h4>
+                    <div class="call-contacts">
+                        <select id="callContactSelect">
+                            <option value="">Choisir un contact</option>
+                        </select>
+                        <button onclick="startCall()">Démarrer l'appel</button>
+                    </div>
+                    <div id="callStatus" class="call-status"></div>
+                    <audio id="ringtone" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" loop></audio>
+                    <button onclick="answerCall()" id="answerBtn" style="display:none;">Répondre</button>
+                    <button onclick="hangupCall()" id="hangupBtn" style="display:none;">Raccrocher</button>
+                </div>
+            </div>
+
+            <!-- Zone de chat commune pour Privé et Groupes -->
+            <div id="currentChatHeader" class="current-chat-header">Sélectionnez une conversation</div>
+            <div class="chat-messages" id="chatMessages"></div>
+
+            <!-- Barre de saisie pour Privé/Groupes -->
             <div class="chat-input">
                 <input type="text" id="chatInput" placeholder="Écrire un message...">
                 <button onclick="document.getElementById('photoInput').click()">📷</button>
