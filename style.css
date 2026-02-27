@@ -365,6 +365,34 @@ body {
     background: rgba(255,255,255,0.1);
     color: var(--text);
 }
+/* Indicateur de réflexion */
+.ai-thinking {
+    color: var(--neon);
+    font-style: italic;
+    margin: 10px 0;
+    text-align: center;
+}
+.ai-thinking span {
+    animation: blink 1.4s infinite;
+    font-size: 1.5em;
+}
+.ai-thinking span:nth-child(2) { animation-delay: 0.2s; }
+.ai-thinking span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Sélecteur de langue */
+.language-switcher button {
+    background: transparent;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    margin: 0 2px;
+}
+
 
 .chat-input input::placeholder {
     color: rgba(255,255,255,0.5);

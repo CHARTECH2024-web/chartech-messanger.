@@ -6,6 +6,15 @@
     <title>CH-APP</title>
     <link rel="stylesheet" href="style.css">
 </head>
+<!-- Sélecteur de langue (à côté des thèmes) -->
+<div class="language-switcher">
+    <button onclick="setLanguage('fr')" title="Français">🇫🇷</button>
+    <button onclick="setLanguage('en')" title="English">🇬🇧</button>
+</div>
+
+<!-- Indicateur de réflexion de l'IA (à mettre dans l'onglet IA) -->
+<div id="aiThinking" class="ai-thinking" style="display:none;">🤖 réfléchit <span>.</span><span>.</span><span>.</span></div>
+
 <body class="theme-dark">
     <!-- Écran de connexion -->
     <div id="loginScreen">
